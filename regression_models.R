@@ -18,7 +18,7 @@ parser$add_argument("-c", "--cores", type="integer", default=1,
                     help="Number of cores to use [default %(default)s]",
                     metavar="number")
 
-parser$add_argument("-b", "--best", action="store_false", default=FALSE,
+parser$add_argument("-b", "--best", action="store_true", default=FALSE,
                     help="Use best predictors found in linear regression [default]")
 
 parser$add_argument("-p", "--report", action="store_true", default=TRUE,
@@ -412,13 +412,6 @@ if (cores > 1) {
 file_name = paste(output_file)
 file_path = file_name
 save(my_models, file=file_path)
-
-
-m = get(load("./test.Rdata"))
-m$fobaModel$bestTune
-
-class(m$glmStepAICModel)
-m$glmStepAICModel$bestTune
 
 
 if (report) {
