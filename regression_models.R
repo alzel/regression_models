@@ -346,9 +346,10 @@ my_models[["rfModel"]] = rfModel
 message("gmb")
 
 gbmGrid <- expand.grid(interaction.depth = seq(1, 7, by = 1),
-                       n.minobsinnode = 2:5,
+                       #n.minobsinnode = 2:5,
                        n.trees = seq(100, 1000, by = 50),
-                       shrinkage = c(0.01, 0.1))
+                       shrinkage = c(0.01, 0.1),
+                       n.minobsinnode)
 
 set.seed(123)
 gbmModel <- train(y = y,
@@ -374,45 +375,17 @@ cbModel <- train(y = y,
 my_models[["cbModel"]] = cbModel
 
 
-# 
-# my_models = list("PLS" = plsModel,
-#                  "Elastic net" = enetModel,
-#                  "MARS" = earthModel,
-#                  "SVM" = svmRModel,
-#                  "Neural Networks" = nnetModel,
-#                  "CART" = rpartModel,
-#                  "Cond Inf Tree" = ctreeModel,
-#                  "Boosted Tree" = gbmModel,
-#                  "Random Forest" = rfModel,
-#                  "Tree bag" = treebagModel,
-#                  "M5" = mtModel,
-#                  "Cubist" = cbModel,
-#                  "Lasso" = lassoModel,
-#                  "Robust regression" = rlmProfile,
-#                  "Linear regression" = lmProfile,
-#                  "Random KNN" = rknnBelModel,
-#                  #"Random Forest Boruta" = rfBorutaModel,
-#                  "random forest selection" = rfProfile,
-#                  "foba" = fobaModel,
-#                  "glmStepAICModel" = glmStepAICModel )
-
+## -- save output ----
 
 allResamples = resamples(my_models)
+
 if (cores > 1) {
   stopCluster(cl)  
 }
-#out_file = sub(pattern="(\\w+).\\w+$", x=basename(input_file), replacement="\\1", perl=T)
-
-# file_name = paste(out_file, "pdf", sep=".")
-# file_path = file_name
-# pdf(file=file_path, height=8.27+0.1*8.27, width = 11.69+0.1*11.69) 
-#   parallelplot(allResamples, metric = "Rsquared")
-# dev.off()
 
 file_name = paste(output_file)
 file_path = file_name
 save(my_models, file=file_path)
-
 
 if (report) {
   t = resamples(my_models)
