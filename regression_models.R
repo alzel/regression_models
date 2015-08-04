@@ -31,9 +31,14 @@ parser$add_argument("output_file", nargs=1,
                     help="File to save all the models")
 
 args <- parser$parse_args()
+
 input_file <- args$input_file
 output_file <- args$output_file
 report = args$report
+cores = args$cores
+repeats = args$repeats
+select.best = args$best
+
 
 if( file.access(input_file) == -1) {
   stop(sprintf("Specified file ( %s ) does not exist", input_file))
@@ -43,7 +48,7 @@ if( file.access(input_file) == -1) {
 
 
 ## -- SETTINGS ----
-cores = args$cores
+
 
 if (cores > 1 ) {
   library("doParallel")
@@ -58,18 +63,16 @@ library(dplyr)
 library(reshape2)
 
 
-repeats = args$repeats
+
 controlObject <- trainControl(method = "repeatedcv", 
                               repeats = repeats,
                               number = 10,
                               verbose = F)
 
 my_models = list()
-select.best = args$best
 
 
 ## -- data transformation ---- 
-input.data = tmp.df
 input.data = na.omit(input.data)
 
 
@@ -80,10 +83,11 @@ y = input.data.trans[,1]
 X = input.data.trans[,-1]
 
 trans.x = NULL
-if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X)) { # checking if there is enough data points for CV
+if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) | ncol(X) >= 50 ) { # checking if there is enough data points for CV
   trans.x = preProcess(x = input.data[,-1], method=c("BoxCox", "center", "scale","pca"))
   X = predict(trans.x, input.data[,-1])
 }
+
 
 # seeds for multicores
 myseeds = as.list(rep(list(rep(123,ncol(X))),repeats * 10))
@@ -104,8 +108,8 @@ ctrl <- rfeControl(functions = lmFuncs,
 SUBS = c(1:(ncol(X)-1)) #sizes of variable subset to search
 lmProfile <- rfe(X, y,
                  sizes = SUBS,
-                 rfeControl = ctrl,
-                 tol=3)
+                 rfeControl = ctrl)
+
 
 my_models[["lmProfile"]] = lmProfile
 
@@ -118,7 +122,7 @@ rlmFuncs$fit = function (x, y, first, last, ...)
   else as.data.frame(x)
   library(MASS)
   tmp$y <- y
-  rlm(y ~ ., data = tmp, maxit = 10000, method = "M")
+  rlm(y ~ ., data = tmp, maxit = 100000, method = "M")
 }
 
 ctrl <- rfeControl(functions = rlmFuncs,
@@ -129,8 +133,8 @@ ctrl <- rfeControl(functions = rlmFuncs,
 
 rlmProfile <- rfe(X, y,
                  sizes = SUBS,
-                 rfeControl = ctrl, 
-                 tol=3)
+                 rfeControl = ctrl)
+
 my_models[["rlmProfile"]] = rlmProfile
 
 ## -- random forest variable selection ----
@@ -142,8 +146,8 @@ ctrl <- rfeControl(functions = rfFuncs,
 
 rfProfile <- rfe(X, y,
                 sizes = SUBS,
-                rfeControl = ctrl, 
-                tol = 3)
+                rfeControl = ctrl)
+                
 my_models[["rfProfile"]] = rfProfile
 
 
