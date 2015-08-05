@@ -39,6 +39,13 @@ cores = args$cores
 repeats = args$repeats
 select.best = args$best
 
+# 
+# input_file = "./results/2015-08-03/data.PPP_AA.imputed/data.PPP_AA.imputed.ATP.1.0.RData"
+# output_file = "testATP.Rdata"
+# report = T
+# cores = 1
+# repeats = 1
+# select.best = F
 
 if( file.access(input_file) == -1) {
   stop(sprintf("Specified file ( %s ) does not exist", input_file))
@@ -83,7 +90,7 @@ y = input.data.trans[,1]
 X = input.data.trans[,-1]
 
 trans.x = NULL
-if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) | ncol(X) >= 50 ) { # checking if there is enough data points for CV
+if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) | ncol(X) >= 10 ) { # checking if there is enough data points for CV
   trans.x = preProcess(x = input.data[,-1], method=c("BoxCox", "center", "scale","pca"))
   X = predict(trans.x, input.data[,-1])
 }
@@ -309,16 +316,16 @@ ctreeModel <- train(y = y,
 my_models[["ctreeModel"]] = ctreeModel
 
 
-## -- M5 ----
-message("M5")
-
-set.seed(123)
-mtModel <- train(y = y, 
-                  x = X,
-                  method = "M5",
-                  trControl = controlObject)
-my_models[["mtModel"]] = mtModel
-
+# ## -- M5 ----
+# message("M5")
+# 
+# set.seed(123)
+# mtModel <- train(y = y, 
+#                   x = X,
+#                   method = "M5",
+#                   trControl = controlObject)
+# my_models[["mtModel"]] = mtModel
+# 
 
 
 
@@ -365,17 +372,17 @@ my_models[["gbmModel"]] = gbmModel
 
 
 ## -- cubist ----
-message("cubist")
-
-cubistGrid <- expand.grid(.committees = c(1, 5, 10, 50, 75, 100), 
-                          .neighbors = c(0, 1, 3, 5, 7, 9))
-set.seed(123)
-cbModel <- train(y = y,
-                 x = X,
-                 method = "cubist",
-                 tuneGrid = cubistGrid,
-                 trControl = controlObject)
-my_models[["cbModel"]] = cbModel
+# message("cubist")
+# 
+# cubistGrid <- expand.grid(.committees = c(1, 5, 10, 50, 75, 100), 
+#                           .neighbors = c(0, 1, 3, 5, 7, 9))
+# set.seed(123)
+# cbModel <- train(y = y,
+#                  x = X,
+#                  method = "cubist",
+#                  tuneGrid = cubistGrid,
+#                  trControl = controlObject)
+# my_models[["cbModel"]] = cbModel
 
 
 ## -- save output ----
