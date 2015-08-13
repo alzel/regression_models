@@ -61,7 +61,7 @@ library(reshape2)
 library(leaps)
 
 input.data = na.omit(input.data)
-trans = preProcess(x = input.data, method = c("center", "scale"))
+trans = preProcess(x = input.data, method = c("BoxCox", "center", "scale"))
 input.data.trans = predict(trans, input.data)
 
 y = input.data.trans[,1]
@@ -69,7 +69,7 @@ X = input.data.trans[,-1]
 
 trans.x = NULL
 if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) ) { # checking if there is enough data points for CV
-  trans.x = preProcess(x = input.data[,-1], method=c( "center", "scale","pca"))
+  trans.x = preProcess(x = input.data[,-1], method=c( "BoxCox", "center", "scale","pca"))
   X = predict(trans.x, input.data[,-1])
 }
 
