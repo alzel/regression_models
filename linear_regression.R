@@ -207,7 +207,8 @@ for(j in 1:nrow(sample.matrix)) {
 
 
 results = list(caret_models = my_models,
-               sample_models = sumarries.df)
+               sample_models = sumarries.df,
+               data = tmp.df.scaled)
 
 if (cores > 1) {
   stopCluster(cl)  
