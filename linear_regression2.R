@@ -6,7 +6,7 @@ parser <- ArgumentParser()
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
 
-parser$add_argument("-p", "--preprocess", action="store_true", default=TRUE,
+parser$add_argument("-p", "--preprocess", action="store_false", default=TRUE,
                     help="Apply Box-Cox, centering, scaling, if false no Box-Cox [default]")
 
 parser$add_argument("-q", "--quietly", action="store_false",
