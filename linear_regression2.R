@@ -104,7 +104,11 @@ X = input.data.trans[,-1]
 
 trans.x = NULL
 if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) ) { # checking if there is enough data points for CV
-  trans.x = preProcess(x = input.data[,-1], method=c( "BoxCox", "center", "scale","pca"))
+  if (preprocess) {
+    trans.x = preProcess(x = input.data, method = c("BoxCox", "center", "scale", "pca"))  
+  } else {
+    trans.x = preProcess(x = input.data, method = c("center", "scale", "pca"))  
+  }
   X = predict(trans.x, input.data[,-1])
 }
 
@@ -128,7 +132,7 @@ formulas = c() #storing models
 i = "y"
 #choosing best model using exhaustive approach
 
-if (ncol(tmp.df.scaled)-1 <= 51) {
+if (ncol(tmp.df.scaled)-1 <= 40) {
   for(j in 1:nrow(sample.matrix)) {
     
     sample.data = tmp.df.scaled[sample.matrix[j,],]
@@ -139,7 +143,7 @@ if (ncol(tmp.df.scaled)-1 <= 51) {
       NVMAX = ncol(sample.data[,-1]) - max(laply(createFolds(sample.data[,1], 10), length))
     }
         
-    b <- regsubsets(as.formula(paste0(i," ~ ", ".")), data=sample.data, nbest=1, nvmax=NVMAX, really.big=T)
+    b <- regsubsets(as.formula(paste0(i," ~ ", ".")), data=sample.data, nbest=1, nvmax=NVMAX)
     rs = summary(b)
     
     n_points = nrow(na.omit(sample.data))
