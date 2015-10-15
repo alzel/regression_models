@@ -1,4 +1,5 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env Rscript-3.1.0
+
 
 suppressPackageStartupMessages(library("argparse"))
 
@@ -36,16 +37,19 @@ input_file <- args$input_file
 output_file <- args$output_file
 
 # cores = args$cores
-
-# input_file ="./results/2015-08-03/data.AA//data.AA.log.aspartate.1.0.RData"
 repeats = args$repeats
 k = args$random_samples
 preprocess = args$preprocess
 
+
+# rm(list = ls())
+# input_file ="./results/2015-09-29/data.PPP_AA/data.PPP_AA.log.ATP.1.0.RData"
+# 
+# 
 # cores = 1
 # repeats = 100
 # k = 100
-# preprocess = T
+# preprocess = F
 
 repeatedCV = function(fit, repeats = 100) {
   
@@ -78,6 +82,7 @@ if( file.access(input_file) == -1) {
 }
 
 
+
 ## -- SETTINGS ----
 
 library(caret)
@@ -89,7 +94,7 @@ library(lmtest)
 library(bootstrap)
 library(car)
 
-input.data = na.omit(input.data)
+#input.data = na.omit(input.data)
 
 if (preprocess) {
   trans = preProcess(x = input.data, method = c("BoxCox", "center", "scale"))  
@@ -97,27 +102,32 @@ if (preprocess) {
   trans = preProcess(x = input.data, method = c("center", "scale"))  
 }
 
+
 input.data.trans = predict(trans, input.data)
 
 y = input.data.trans[,1]
 X = input.data.trans[,-1]
 
 trans.x = NULL
-if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) ) { # checking if there is enough data points for CV
+
+
+if (ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
+  
   if (preprocess) {
-    trans.x = preProcess(x = input.data, method = c("BoxCox", "center", "scale", "pca"))  
+    trans.x = preProcess(x = input.data[,-1], method = c("BoxCox", "center", "scale", "pca"), thresh = 0.99)  
   } else {
-    trans.x = preProcess(x = input.data, method = c("center", "scale", "pca"))  
+    trans.x = preProcess(x = input.data[,-1], method = c("center", "scale", "pca"), thresh = 0.99)  
   }
-  X = predict(trans.x, input.data[,-1])
+  
+  X = predict(trans.x, input.data[,-1])  
 }
+
 
 data = cbind(y,X)
 tmp.df.scaled = data
 
 sample_size = round(nrow(tmp.df.scaled)*0.9)
 total_samples = nrow(tmp.df.scaled)
-
 
 sample.matrix = matrix(rep(0, k*sample_size), nrow=k)
 
@@ -132,17 +142,20 @@ formulas = c() #storing models
 i = "y"
 #choosing best model using exhaustive approach
 
-if (ncol(tmp.df.scaled)-1 <= 40) {
+if (ncol(tmp.df.scaled)-1 <= 30) {
   for(j in 1:nrow(sample.matrix)) {
     
     sample.data = tmp.df.scaled[sample.matrix[j,],]
     
     NVMAX = ncol(tmp.df.scaled) - 1
+    
     if ( NVMAX >= nrow(sample.data[,-1]) - max(laply(createFolds(sample.data[,1]), length)) )  {
       #NVMAX = round(nrow(sample.data)/10)*9 - 1 #to ensure 10-fold cross validation validity
       NVMAX = ncol(sample.data[,-1]) - max(laply(createFolds(sample.data[,1], 10), length))
+      
+      
     }
-        
+    
     b <- regsubsets(as.formula(paste0(i," ~ ", ".")), data=sample.data, nbest=1, nvmax=NVMAX)
     rs = summary(b)
     
@@ -196,10 +209,7 @@ if (length(tbl.fomulas[tbl.fomulas > 1]) != 0 ) {
 }
 
 best.models[which(best.models ==  "y ~ 1")] = NA
-
 best.models = as.vector(na.omit(best.models))
-
-
 
 
 m.list = list()
