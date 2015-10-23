@@ -390,7 +390,7 @@ my_models[["rfModel"]] = rfModel
 message("gmb")
 
 gbmGrid <- expand.grid(interaction.depth = seq(1, 7, by = 1),
-                       #n.minobsinnode = 2:5,
+                       n.minobsinnode = 2:5,
                        n.trees = seq(100, 1000, by = 50),
                        shrinkage = c(0.01, 0.1))
 
