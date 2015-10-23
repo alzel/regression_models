@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env Rscript-3.1.0
 
 suppressPackageStartupMessages(library("argparse"))
 
@@ -6,6 +6,8 @@ parser <- ArgumentParser()
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
 
+parser$add_argument("-p", "--preprocess", action="store_false", default=TRUE,
+                    help="Apply Box-Cox, centering, scaling, if false no Box-Cox [default]")
 
 parser$add_argument("-q", "--quietly", action="store_false",
                     dest="verbose", help="Print little output")
@@ -21,8 +23,10 @@ parser$add_argument("-c", "--cores", type="integer", default=1,
 parser$add_argument("-b", "--best", action="store_true", default=FALSE,
                     help="Use best predictors found in linear regression [default]")
 
-parser$add_argument("-p", "--report", action="store_true", default=TRUE,
+parser$add_argument("-l", "--report", action="store_true", default=TRUE,
                     help="Save report to output_file.pdf [default]")
+
+
 
 parser$add_argument("input_file", nargs=1, 
                     help="File with R data.frame to be loaded, first column must be response")
@@ -38,20 +42,17 @@ report = args$report
 cores = args$cores
 repeats = args$repeats
 select.best = args$best
+preprocess = args$preprocess
 
 # 
-# input_file = "./results/2015-08-03/data.PPP_AA.imputed/data.PPP_AA.imputed.ATP.1.0.RData"
+# input_file = "./results/2015-09-29/data.PPP_AA/data.PPP_AA.ADP.1.0.RData"
 # output_file = "testATP.Rdata"
 # report = T
 # cores = 1
 # repeats = 1
 # select.best = F
+# preprocess = F
 
-if( file.access(input_file) == -1) {
-  stop(sprintf("Specified file ( %s ) does not exist", input_file))
-} else {
-  input.data <- get(load(input_file))
-}
 
 
 ## -- SETTINGS ----
@@ -79,21 +80,49 @@ controlObject <- trainControl(method = "repeatedcv",
 my_models = list()
 
 
+if( file.access(input_file) == -1) {
+  stop(sprintf("Specified file ( %s ) does not exist", input_file))
+} else {
+  input.data <- get(load(input_file))
+}
+
+
 ## -- data transformation ---- 
 input.data = na.omit(input.data)
 
+input.data.tmp = input.data[,-1]
 
-trans = preProcess(x = input.data, method = c("BoxCox", "center", "scale"))
+input.data.tmp = cbind(input.data[,1],input.data.tmp[,-findCorrelation(cor(input.data.tmp), cutoff = .85)])
+names(input.data.tmp)[1] = names(input.data)[1]
+
+input.data = input.data.tmp
+
+if (preprocess) {
+  trans = preProcess(x = input.data, method = c("BoxCox", "center", "scale"))  
+} else {
+  trans = preProcess(x = input.data, method = c("center", "scale"))  
+}
+
 input.data.trans = predict(trans, input.data)
 
 y = input.data.trans[,1]
 X = input.data.trans[,-1]
 
 trans.x = NULL
-if (ncol(X) - max(laply(createFolds(y), length)) > nrow(X) | ncol(X) >= 10 ) { # checking if there is enough data points for CV
-  trans.x = preProcess(x = input.data[,-1], method=c("BoxCox", "center", "scale","pca"))
-  X = predict(trans.x, input.data[,-1])
+
+
+if (ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
+  
+  if (preprocess) {
+    trans.x = preProcess(x = input.data[,-1], method = c("BoxCox", "center", "scale", "pca"), thresh = 0.99)  
+  } else {
+    trans.x = preProcess(x = input.data[,-1], method = c("center", "scale", "pca"), thresh = 0.99)  
+  }
+  
+  X = predict(trans.x, input.data[,-1])  
 }
+
+
 
 
 # seeds for multicores
@@ -117,16 +146,19 @@ lmProfile <- rfe(X, y,
                  sizes = SUBS,
                  rfeControl = ctrl)
 
-
 my_models[["lmProfile"]] = lmProfile
 
 ## -- robust regression variable selection ----
 rlmFuncs = lmFuncs
+
 rlmFuncs$fit = function (x, y, first, last, ...)
 {
-  tmp <- if (is.data.frame(x))
+  tmp <- if (is.data.frame(x)) {
     x
-  else as.data.frame(x)
+  } else {
+    as.data.frame(x)
+  }
+    
   library(MASS)
   tmp$y <- y
   rlm(y ~ ., data = tmp, maxit = 100000, method = "M")
@@ -137,6 +169,7 @@ ctrl <- rfeControl(functions = rlmFuncs,
                    repeats = repeats,
                    verbose = F,
                    returnResamp = "all")
+
 
 rlmProfile <- rfe(X, y,
                  sizes = SUBS,
@@ -393,6 +426,7 @@ if (cores > 1) {
   stopCluster(cl)  
 }
 
+
 file_name = paste(output_file)
 file_path = file_name
 save(my_models, file=file_path)
@@ -406,6 +440,7 @@ if (report) {
     geom_linerange() + 
     geom_point(data=t.long.stats, aes(x=variable,y=meanR2)) +
     coord_flip()
+  
   file_name = paste(output_file, "pdf", sep=".")
   ggsave(plot=p, filename=file_name,  width = 210, height = 297, units = "mm")
 }
