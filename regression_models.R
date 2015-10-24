@@ -48,14 +48,14 @@ select.best = args$best
 preprocess = args$preprocess
 cor_thr = args$threshold
 # # 
-input_file = "./results/2015-09-29/data.AA/data.AA.alanine.1.0.RData"
-output_file = "test.Rdata"
-report = T
-cores = 1
-repeats = 1
-select.best = F
-preprocess = F
-cor_thr = 0.99
+# input_file = "./results/2015-09-29/data.AA/data.AA.alanine.1.0.RData"
+# output_file = "test.Rdata"
+# report = T
+# cores = 1
+# repeats = 1
+# select.best = F
+# preprocess = F
+# cor_thr = 0.99
 
 ## -- SETTINGS ----
 
