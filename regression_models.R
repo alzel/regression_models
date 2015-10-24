@@ -48,14 +48,14 @@ select.best = args$best
 preprocess = args$preprocess
 cor_thr = args$threshold
 # # 
-# input_file = "./results/2015-09-29/data.AA/data.AA.alanine.1.0.RData"
+# input_file = "./results/2015-09-29/data.AA/data.AA.arginine.1.0.RData"
 # output_file = "test.Rdata"
 # report = T
 # cores = 1
 # repeats = 1
 # select.best = F
 # preprocess = F
-# cor_thr = 0.99
+# cor_thr = 0.85
 
 ## -- SETTINGS ----
 
@@ -95,10 +95,11 @@ input.data = na.omit(input.data)
 input.data.tmp = input.data[,-1]
 toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = TRUE)
 
-if (length(toRemove) > 0) {
+if (length(input.data) >  3 & length(toRemove) > 0) {
   input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
   if (length(input.data.tmp) >2) {
     names(input.data.tmp)[1] = names(input.data)[1]
+    rownames(input.data.tmp) = rownames(input.data)
   } else if (length(input.data.tmp) == 2) {
     stop(paste("Something wrong in file", input_file) )
     #tmp.idx <- which(!(1:length(input.data) %in% toRemove))
