@@ -47,15 +47,16 @@ repeats = args$repeats
 select.best = args$best
 preprocess = args$preprocess
 cor_thr = args$threshold
+
 # # 
-# input_file = "./results/2015-09-29/data.AA/data.AA.arginine.1.0.RData"
+# input_file = "./results/2015-09-29/data.AA/data.AA.asparagine.3.0.RData"
 # output_file = "test.Rdata"
 # report = T
 # cores = 1
 # repeats = 1
 # select.best = F
 # preprocess = F
-# cor_thr = 0.85
+# cor_thr = 1
 
 ## -- SETTINGS ----
 
@@ -95,7 +96,9 @@ input.data = na.omit(input.data)
 input.data.tmp = input.data[,-1]
 toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = TRUE)
 
-if (length(input.data) >  3 & length(toRemove) > 0) {
+doPCA = ifelse(ncol(input.data[,-1]) - max(laply(createFolds(na.omit(y)), length)) - length(toRemove) < length(na.omit(y)), TRUE, FALSE)
+
+if (!doPCA & length(input.data) >  3 & length(toRemove) > 0) {
   input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
   if (length(input.data.tmp) >2) {
     names(input.data.tmp)[1] = names(input.data)[1]
@@ -125,7 +128,7 @@ X = input.data.trans[,-1]
 trans.x = NULL
 
 
-if (ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
+if (doPCA | ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
   
   if (preprocess) {
     trans.x = preProcess(x = input.data[,-1], method = c("BoxCox", "center", "scale", "pca"), thresh = 0.99)  
@@ -136,13 +139,9 @@ if (ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) )
   X = predict(trans.x, input.data[,-1])  
 }
 
-
-
-
 # seeds for multicores
 myseeds = as.list(rep(list(rep(123,ncol(X))),repeats * 10))
 myseeds[[length(myseeds) + 1]] = 123
-
 
 
 ## -- linear regression variable selection ----
@@ -189,6 +188,7 @@ rlmProfile <- rfe(X, y,
                  sizes = SUBS,
                  rfeControl = ctrl)
 
+dim(X)
 my_models[["rlmProfile"]] = rlmProfile
 
 ## -- random forest variable selection ----
