@@ -26,6 +26,9 @@ parser$add_argument("-b", "--best", action="store_true", default=FALSE,
 parser$add_argument("-l", "--report", action="store_true", default=TRUE,
                     help="Save report to output_file.pdf [default]")
 
+parser$add_argument("-thr", "--threshold", type="float", default=0.85,
+                    help="Treshold to remove highly correlated variables [default %(default)s]",
+                    metavar="number")
 
 
 parser$add_argument("input_file", nargs=1, 
@@ -43,20 +46,18 @@ cores = args$cores
 repeats = args$repeats
 select.best = args$best
 preprocess = args$preprocess
-
-# 
-# input_file = "./results/2015-09-29/data.PPP_AA/data.PPP_AA.ADP.1.0.RData"
-# output_file = "testATP.Rdata"
+cor_thr = args$threshold
+# # 
+# input_file = "./results/2015-09-29/data.AA/data.AA.alanine.1.0.RData"
+# output_file = "test.Rdata"
 # report = T
 # cores = 1
 # repeats = 1
 # select.best = F
 # preprocess = F
-
-
+# cor_thr = 0.85
 
 ## -- SETTINGS ----
-
 
 if (cores > 1 ) {
   library("doParallel")
@@ -92,8 +93,19 @@ input.data = na.omit(input.data)
 
 input.data.tmp = input.data[,-1]
 
-input.data.tmp = cbind(input.data[,1],input.data.tmp[,-findCorrelation(cor(input.data.tmp), cutoff = .85)])
-names(input.data.tmp)[1] = names(input.data)[1]
+toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact=Т)
+
+input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))
+
+if (length(input.data.tmp) >2) {
+  names(input.data.tmp)[1] = names(input.data)[1]
+} else if (length(input.data.tmp) == 2) {
+  stop(paste("Something wrong in file", input_file) )
+  #tmp.idx <- which(!(1:length(input.data) %in% toRemove))
+  #names(input.data.tmp)[tmp.idx] = names(input.data)[tmp.idx]
+} else {
+  stop(paste("Something wrong in file", input_file) )
+}
 
 input.data = input.data.tmp
 
