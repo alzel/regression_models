@@ -93,7 +93,7 @@ input.data = na.omit(input.data)
 
 input.data.tmp = input.data[,-1]
 
-toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact=Т)
+toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = T)
 
 input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))
 
