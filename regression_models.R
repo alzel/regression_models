@@ -26,7 +26,7 @@ parser$add_argument("-b", "--best", action="store_true", default=FALSE,
 parser$add_argument("-l", "--report", action="store_true", default=TRUE,
                     help="Save report to output_file.pdf [default]")
 
-parser$add_argument("-thr", "--threshold", type="float", default=0.85,
+parser$add_argument("-t", "--threshold", type="double", default=0.85,
                     help="Treshold to remove highly correlated variables [default %(default)s]",
                     metavar="number")
 
