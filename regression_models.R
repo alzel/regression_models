@@ -49,6 +49,7 @@ preprocess = args$preprocess
 cor_thr = args$threshold
 
 # # 
+# rm(list=ls())
 # input_file = "./results/2015-09-29/data.AA/data.AA.asparagine.3.0.RData"
 # output_file = "test.Rdata"
 # report = T
@@ -96,7 +97,7 @@ input.data = na.omit(input.data)
 input.data.tmp = input.data[,-1]
 toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = TRUE)
 
-doPCA = ifelse(ncol(input.data[,-1]) - max(laply(createFolds(na.omit(y)), length)) - length(toRemove) < length(na.omit(y)), TRUE, FALSE)
+doPCA = ifelse(ncol(input.data[,-1]) - max(laply(createFolds(na.omit(input.data[,1])), length)) - length(toRemove) < length(na.omit(input.data[,1])), TRUE, FALSE)
 
 if (!doPCA & length(input.data) >  3 & length(toRemove) > 0) {
   input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
