@@ -6,10 +6,10 @@ parser <- ArgumentParser()
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
 
-parser$add_argument("-p", "--preprocess", action="store_false", default=TRUE,
-                    help="Apply Box-Cox, centering, scaling, if false no Box-Cox [default]")
+parser$add_argument("-p", "--preprocess", action="store_true", default=FALSE,
+                    help="Apply Box-Cox, centering, scaling [default]")
 
-parser$add_argument("-f", "--force_pca", action="store_false", default=FALSE,
+parser$add_argument("-f", "--force_pca", action="store_true", default=FALSE,
                     help="Force doing PCA on predictors [default]")
 
 parser$add_argument("-q", "--quietly", action="store_false",
