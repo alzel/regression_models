@@ -9,6 +9,9 @@ parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
 parser$add_argument("-p", "--preprocess", action="store_false", default=TRUE,
                     help="Apply Box-Cox, centering, scaling, if false no Box-Cox [default]")
 
+parser$add_argument("-f", "--force_pca", action="store_false", default=FALSE,
+                    help="Force doing PCA on predictors [default]")
+
 parser$add_argument("-q", "--quietly", action="store_false",
                     dest="verbose", help="Print little output")
 
@@ -47,17 +50,18 @@ repeats = args$repeats
 select.best = args$best
 preprocess = args$preprocess
 cor_thr = args$threshold
-
+forcePCA = args$force_pca
 # # 
-# rm(list=ls())
-# input_file = "./results/2015-09-29/data.AA/data.AA.asparagine.3.0.RData"
-# output_file = "test.Rdata"
-# report = T
-# cores = 1
-# repeats = 1
-# select.best = F
-# preprocess = F
-# cor_thr = 1
+rm(list=ls())
+input_file = "../../results/2015-09-29/data.AA/data.AA.asparagine.1.0.RData"
+output_file = "test.Rdata"
+report = T
+cores = 1
+repeats = 1
+select.best = F
+preprocess = F
+cor_thr = 1
+forcePCA = F
 
 ## -- SETTINGS ----
 
@@ -93,11 +97,19 @@ if( file.access(input_file) == -1) {
 ## -- data transformation ---- 
 input.data = na.omit(input.data)
 
-
 input.data.tmp = input.data[,-1]
-toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = TRUE)
+toRemove = findCorrelation(cor(input.data.tmp), cutoff = 0.95, exact = TRUE)
 
-doPCA = ifelse(ncol(input.data[,-1]) - max(laply(createFolds(na.omit(input.data[,1])), length)) - length(toRemove) < length(na.omit(input.data[,1])), TRUE, FALSE)
+#always do PCA in the case if number of good (non-correlated) variables is less than n-max(length(k-fold)) of samples
+doPCA <- ifelse(ncol(input.data[,-1]) - length(toRemove) > length(na.omit(input.data[,1])) - max(laply(createFolds(na.omit(input.data[,1])), length)), T, F)
+
+#always do PCA if number of highly correlated predictors is very high  
+doPCA <- ifelse(ncol(input.data[,-1]) - length(toRemove) <= 2, T, F)
+
+#doPCA anyway if forced
+if(forcePCA) {
+  doPCA <- TRUE
+}
 
 if (!doPCA & length(input.data) >  3 & length(toRemove) > 0) {
   input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
@@ -125,11 +137,9 @@ input.data.trans = predict(trans, input.data)
 
 y = input.data.trans[,1]
 X = input.data.trans[,-1]
-
 trans.x = NULL
 
-
-if (doPCA | ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
+if (doPCA) {
   
   if (preprocess) {
     trans.x = preProcess(x = input.data[,-1], method = c("BoxCox", "center", "scale", "pca"), thresh = 0.99)  
@@ -204,16 +214,6 @@ rfProfile <- rfe(X, y,
                 rfeControl = ctrl)
                 
 my_models[["rfProfile"]] = rfProfile
-
-
-# forTraining = createDataPartition(y, p=1)[[1]]
-# trainingSet = input.data[forTraining,] 
-# 
-# trans = preProcess(x = trainingSet, method = c("BoxCox", "center", "scale"))
-# input.data.trans = predict(trans, trainingSet)
-# 
-# y = input.data.trans[,1]
-# X = input.data.trans[,-1]
 
 
 ## -- glmStepAIC ----
