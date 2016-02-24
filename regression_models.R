@@ -52,16 +52,18 @@ preprocess = args$preprocess
 cor_thr = args$threshold
 forcePCA = args$force_pca
 # # 
+
 #rm(list=ls())
-#input_file = "../../results/2015-09-29/data.AA/data.AA.asparagine.1.0.RData"
+
+#input_file = "../../results/2016-02-24/data.AA/data.AA.alanine.3.0.RData"
 #output_file = "test.Rdata"
 #report = T
 #cores = 1
 #repeats = 1
 #select.best = F
-#preprocess = F
+#preprocess = T
 #cor_thr = 1
-#forcePCA = F
+#forcePCA = T
 
 ## -- SETTINGS ----
 
@@ -76,6 +78,7 @@ library(caret)
 library(plyr)
 library(dplyr)
 library(reshape2)
+#library(MASS)
 
 
 
@@ -93,7 +96,6 @@ if( file.access(input_file) == -1) {
   input.data <- get(load(input_file))
 }
 
-
 ## -- data transformation ---- 
 input.data = na.omit(input.data)
 
@@ -110,6 +112,7 @@ doPCA <- ifelse(ncol(input.data[,-1]) - length(toRemove) <= 2, T, F)
 if(forcePCA) {
   doPCA <- TRUE
 }
+
 
 if (!doPCA & length(input.data) >  3 & length(toRemove) > 0) {
   input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
@@ -165,7 +168,9 @@ ctrl <- rfeControl(functions = lmFuncs,
                    seeds = myseeds,
                    returnResamp = "all")
 
+
 SUBS = c(1:(ncol(X)-1)) #sizes of variable subset to search
+
 lmProfile <- rfe(X, y,
                  sizes = SUBS,
                  rfeControl = ctrl)
@@ -173,34 +178,30 @@ lmProfile <- rfe(X, y,
 my_models[["lmProfile"]] = lmProfile
 
 ## -- robust regression variable selection ----
-rlmFuncs = lmFuncs
-
-rlmFuncs$fit = function (x, y, first, last, ...)
-{
-  tmp <- if (is.data.frame(x)) {
-    x
-  } else {
-    as.data.frame(x)
-  }
-    
-  library(MASS)
-  tmp$y <- y
-  rlm(y ~ ., data = tmp, maxit = 100000, method = "M")
-}
-
-ctrl <- rfeControl(functions = rlmFuncs,
-                   method = "repeatedcv",
-                   repeats = repeats,
-                   verbose = F,
-                   returnResamp = "all")
-
-
-rlmProfile <- rfe(X, y,
-                 sizes = SUBS,
-                 rfeControl = ctrl)
-
-dim(X)
-my_models[["rlmProfile"]] = rlmProfile
+# rlmFuncs = lmFuncs
+# 
+# rlmFuncs$fit = function (x, y, first, last, ...)
+# {
+#   tmp = data.frame()
+#   if (is.data.frame(x)) {
+#     tmp <- x
+#   } else {
+#     tmp <- as.data.frame(x)
+#   }
+#   tmp$y <- y
+#   rlm(y ~ ., data = tmp, maxit = 1000000, method = "M")
+# }
+# 
+# ctrl <- rfeControl(functions = rlmFuncs,
+#                    method = "repeatedcv",
+#                    repeats = repeats,
+#                    verbose = T,
+#                    returnResamp = "all")
+# 
+# rlmProfile <- rfe(X, y,
+#                  rfeControl = ctrl)
+# 
+# my_models[["rlmProfile"]] = rlmProfile
 
 ## -- random forest variable selection ----
 ctrl <- rfeControl(functions = rfFuncs,
