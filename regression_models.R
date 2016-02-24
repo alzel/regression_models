@@ -52,16 +52,16 @@ preprocess = args$preprocess
 cor_thr = args$threshold
 forcePCA = args$force_pca
 # # 
-rm(list=ls())
-input_file = "../../results/2015-09-29/data.AA/data.AA.asparagine.1.0.RData"
-output_file = "test.Rdata"
-report = T
-cores = 1
-repeats = 1
-select.best = F
-preprocess = F
-cor_thr = 1
-forcePCA = F
+#rm(list=ls())
+#input_file = "../../results/2015-09-29/data.AA/data.AA.asparagine.1.0.RData"
+#output_file = "test.Rdata"
+#report = T
+#cores = 1
+#repeats = 1
+#select.best = F
+#preprocess = F
+#cor_thr = 1
+#forcePCA = F
 
 ## -- SETTINGS ----
 
