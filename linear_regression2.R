@@ -7,9 +7,6 @@ parser <- ArgumentParser()
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
 
-parser$add_argument("-p", "--preprocess", action="store_false", default=TRUE,
-                    help="Apply Box-Cox, centering, scaling, if false no Box-Cox [default]")
-
 parser$add_argument("-q", "--quietly", action="store_false",
                     dest="verbose", help="Print little output")
 
@@ -20,16 +17,22 @@ parser$add_argument("-r", "--repeats", type="integer", default=1,
 parser$add_argument("-k", "--random_samples", type="integer", default=100,
                     help="Number of random samples used for AIC approach [default %(default)s]",
                     metavar="number")
-# 
-# parser$add_argument("-c", "--cores", type="integer", default=1,
-#                     help="Number of cores to use [default %(default)s]",
-#                     metavar="number")
 
 parser$add_argument("input_file", nargs=1, 
                     help="File with R data.frame to be loaded, first column must be response")
 
 parser$add_argument("output_file", nargs=1, 
                     help="File to save all the models")
+
+parser$add_argument("-p", "--preprocess", action="store_true", default=FALSE,
+                    help="Apply Box-Cox, centering, scaling [default]")
+
+parser$add_argument("-f", "--force_pca", action="store_true", default=FALSE,
+                    help="Force doing PCA on predictors [default]")
+
+parser$add_argument("-t", "--threshold", type="double", default=0.85,
+                    help="Treshold to remove highly correlated variables [default %(default)s]",
+                    metavar="number")
 
 args <- parser$parse_args()
 
@@ -40,16 +43,29 @@ output_file <- args$output_file
 repeats = args$repeats
 k = args$random_samples
 preprocess = args$preprocess
+cor_thr = args$threshold
+forcePCA = args$force_pca
 
+library(caret)
+library(plyr)
+library(dplyr)
+library(reshape2)
+library(leaps)
+library(lmtest)
+library(bootstrap)
+library(car)
 
 # rm(list = ls())
-# input_file ="./results/2015-09-29/data.PPP_AA/data.PPP_AA.log.ATP.1.0.RData"
-# 
-# 
+# input_file ="../../results/2015-09-29/data.PPP_AA/data.PPP_AA.log.ADP.1.0.RData"
+#  
+#  
 # cores = 1
 # repeats = 100
 # k = 100
-# preprocess = F
+# #preprocess = F
+# preprocess = T
+# cor_thr = 1
+# forcePCA = T
 
 repeatedCV = function(fit, repeats = 100) {
   
@@ -82,19 +98,41 @@ if( file.access(input_file) == -1) {
 }
 
 
-
-## -- SETTINGS ----
-
-library(caret)
-library(plyr)
-library(dplyr)
-library(reshape2)
-library(leaps)
-library(lmtest)
-library(bootstrap)
-library(car)
-
 #input.data = na.omit(input.data)
+
+## -- data transformation ---- 
+input.data = na.omit(input.data)
+
+input.data.tmp = input.data[,-1]
+toRemove = findCorrelation(cor(input.data.tmp), cutoff = cor_thr, exact = TRUE)
+
+#always do PCA in the case if number of good (non-correlated) variables is less than n-max(length(k-fold)) of samples
+doPCA <- ifelse(ncol(input.data[,-1]) - length(toRemove) > length(na.omit(input.data[,1])) - max(laply(createFolds(na.omit(input.data[,1])), length)), T, F)
+
+#always do PCA if number of highly correlated predictors is very high  
+doPCA <- ifelse(ncol(input.data[,-1]) - length(toRemove) <= 2, T, F)
+
+#doPCA anyway if forced
+if(forcePCA) {
+  doPCA <- TRUE
+}
+
+
+if (!doPCA & length(input.data) >  3 & length(toRemove) > 0) {
+  input.data.tmp = as.data.frame(cbind(input.data[,1],input.data.tmp[,-toRemove]))  
+  if (length(input.data.tmp) >2) {
+    names(input.data.tmp)[1] = names(input.data)[1]
+    rownames(input.data.tmp) = rownames(input.data)
+  } else if (length(input.data.tmp) == 2) {
+    stop(paste("Something wrong in file", input_file) )
+    #tmp.idx <- which(!(1:length(input.data) %in% toRemove))
+    #names(input.data.tmp)[tmp.idx] = names(input.data)[tmp.idx]
+  } else {
+    stop(paste("Something wrong in file", input_file) )
+  }
+  input.data = input.data.tmp
+}
+
 
 if (preprocess) {
   trans = preProcess(x = input.data, method = c("BoxCox", "center", "scale"))  
@@ -102,23 +140,20 @@ if (preprocess) {
   trans = preProcess(x = input.data, method = c("center", "scale"))  
 }
 
-
 input.data.trans = predict(trans, input.data)
 
 y = input.data.trans[,1]
 X = input.data.trans[,-1]
-
 trans.x = NULL
 
-
-if (ncol(X) - max(laply(createFolds(na.omit(y)), length)) > length(na.omit(y)) ) { # checking if there is enough data points for CV
+if (doPCA) {
   
   if (preprocess) {
     trans.x = preProcess(x = input.data[,-1], method = c("BoxCox", "center", "scale", "pca"), thresh = 0.99)  
   } else {
     trans.x = preProcess(x = input.data[,-1], method = c("center", "scale", "pca"), thresh = 0.99)  
   }
-  
+  #trans.x = preProcess(x = input.data[,-1], method = c("center", "scale", "ica"), n.comp=trans.x$numComp)
   X = predict(trans.x, input.data[,-1])  
 }
 
@@ -291,9 +326,11 @@ for (m in 1:length(best.models)) {
   sumarries.df = rbind(sumarries.df, tmp.after)  
 }
 
-results = list(models = m.list,
+results = list(input_data = input.data,
+               trans = trans,
+               trans.x = trans.x,
+               models = m.list,
                summaries = sumarries.df)
-
 
 file_name = paste(output_file)
 file_path = file_name
