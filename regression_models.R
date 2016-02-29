@@ -53,17 +53,17 @@ cor_thr = args$threshold
 forcePCA = args$force_pca
 # # 
 
-#rm(list=ls())
-
-#input_file = "../../results/2016-02-24/data.AA/data.AA.alanine.3.0.RData"
-#output_file = "test.Rdata"
-#report = T
-#cores = 1
-#repeats = 1
-#select.best = F
-#preprocess = T
-#cor_thr = 1
-#forcePCA = T
+# rm(list=ls())
+# 
+# input_file = "../../results/2016-02-24/data.AA/data.AA.alanine.3.0.RData"
+# output_file = "test.Rdata"
+# report = T
+# cores = 1
+# repeats = 1
+# select.best = F
+# preprocess = T
+# cor_thr = 1
+# forcePCA = T
 
 ## -- SETTINGS ----
 
@@ -443,9 +443,15 @@ if (cores > 1) {
 }
 
 
+
+results = list(input_data = input.data,
+               trans = trans,
+               trans.x = trans.x,
+               models = my_models)
+
 file_name = paste(output_file)
 file_path = file_name
-save(my_models, file=file_path)
+save(results, file=file_path)
 
 if (report) {
   t = resamples(my_models)
