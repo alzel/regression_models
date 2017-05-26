@@ -53,17 +53,17 @@ cor_thr = args$threshold
 forcePCA = args$force_pca
 # # 
 
-# rm(list=ls())
+rm(list=ls())
 # 
-# input_file = "../../results/2016-02-24/data.AA/data.AA.alanine.3.0.RData"
-# output_file = "test.Rdata"
-# report = T
-# cores = 1
-# repeats = 1
-# select.best = F
-# preprocess = T
-# cor_thr = 1
-# forcePCA = T
+input_file = "./results/2016-02-24/data.AA/data.AA.alanine.3.0.RData"
+output_file = "test.Rdata"
+report = T
+cores = 1
+repeats = 1
+select.best = F
+preprocess = T
+cor_thr = 1
+forcePCA = T
 
 ## -- SETTINGS ----
 
@@ -175,6 +175,7 @@ lmProfile <- rfe(X, y,
                  sizes = SUBS,
                  rfeControl = ctrl)
 
+
 my_models[["lmProfile"]] = lmProfile
 
 ## -- robust regression variable selection ----
@@ -214,6 +215,7 @@ rfProfile <- rfe(X, y,
                 sizes = SUBS,
                 rfeControl = ctrl)
                 
+
 my_models[["rfProfile"]] = rfProfile
 
 
@@ -222,6 +224,7 @@ message("glmStepAIC")
 glmStepAICModel <- train(y = y, x = X,
                   method = "glmStepAIC",
                   trControl = controlObject)
+
 
 my_models[["glmStepAICModel"]] = glmStepAICModel
 
