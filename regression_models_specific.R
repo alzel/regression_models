@@ -8,23 +8,23 @@ parser <- ArgumentParser()
 
 all_methods = c("lmProfile",
                 "rfProfile",
-                "glmStepAIC",
-                "foba",
-                "pls",
-                "enet",
-                "lasso",
-                "earth",
-                "svmRadial",
-                "avNNet",
-                "rpart",
-                "ctree",
-                "treebag",
-                "rf",
-                "gbm",
-                "Boruta",
-                "rknnBel",
-                "M5",
-                "cubist")
+                "glmStepAICModel",
+                "fobaModel",
+                "plsModel",
+                "enetModel",
+                "lassoModel",
+                "earthModel",
+                "svmRModel",
+                "nnetModel",
+                "rpartModel",
+                "ctreeModel",
+                "treebagModel",
+                "rfModel",
+                "gbmModel",
+                "rfBorutaModel",
+                "rknnBelModel",
+                "mtModel",
+                "cbModel")
 
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
@@ -219,7 +219,7 @@ switch(method,
     my_models[["rfProfile"]] = result
     
   },
-  glmStepAIC = {
+  glmStepAICModel = {
     ## -- glmStepAIC ----
     message("glmStepAIC")
     glmStepAICModel <- train(y = y, x = X,
@@ -227,7 +227,7 @@ switch(method,
                              trControl = controlObject)
     my_models[["glmStepAICModel"]] = glmStepAICModel
   },
-  foba = {
+  fobaModel = {
     ## -- foba ----
     message("foba")
     fobaModel <- train(y = y, x = X,
@@ -237,7 +237,7 @@ switch(method,
                      trControl = controlObject)
     my_models[["fobaModel"]] = fobaModel
   },
-  pls = {
+  plsModel = {
     ## -- pls ----
     message("pls")
     set.seed(123)
@@ -248,7 +248,7 @@ switch(method,
     my_models[["plsModel"]] = plsModel
     
   },
-  enet = {
+  enetModel = {
     ## -- enet ----
     message("enet")
     
@@ -262,7 +262,7 @@ switch(method,
     
     my_models[["enetModel"]] = enetModel
   },  
-  lasso = {
+  lassoModel = {
     ## -- lasso ----
     message("lasso")
     
@@ -277,7 +277,7 @@ switch(method,
     my_models[["lassoModel"]] = lassoModel
     
   },
-  earth = {
+  earthModel = {
     ## -- earth ----
     message("earth")
     
@@ -291,7 +291,7 @@ switch(method,
     my_models[["earthModel"]] = earthModel
     
   },
-  svmRadial = {
+  svmRModel = {
     ## -- svmRadial ----
     message("svmRadial")
     set.seed(123)
@@ -302,7 +302,7 @@ switch(method,
     my_models[["svmRModel"]] = svmRModel
     
   },
-  avNNet = {
+  nnetModel = {
     ## -- avNNet ----
     message("avNNet")
     
@@ -321,7 +321,7 @@ switch(method,
     my_models[["nnetModel"]] = nnetModel
     
   },
-  rpart = {
+  rpartModel = {
     ## -- rpart ----
     message("rpart")
     
@@ -333,7 +333,7 @@ switch(method,
                         trControl = controlObject)
     my_models[["rpartModel"]] = rpartModel
   },
-  ctree = {
+  ctreeModel = {
     ## -- ctree ----
     message("ctree")
     
@@ -345,7 +345,7 @@ switch(method,
                         trControl = controlObject)
     my_models[["ctreeModel"]] = ctreeModel
   },
-  treebag = {
+  treebagModel = {
     ## -- treebag ----
     message("treebag")
     
@@ -356,7 +356,7 @@ switch(method,
                           trControl = controlObject)
     my_models[["treebagModel"]] = treebagModel
   },
-  rf = {
+  rfModel = {
     ## -- rf ----
     message("rf")
     set.seed(123)
@@ -369,7 +369,7 @@ switch(method,
                      trControl = controlObject)
     my_models[["rfModel"]] = rfModel
   },
-  gbm = {
+  gbmModel = {
     ## -- gmb ----
     message("gmb")
     
@@ -387,7 +387,7 @@ switch(method,
                       trControl = controlObject)
     my_models[["gbmModel"]] = gbmModel
   },
-  Boruta = {
+  rfBorutaModel = {
     ## -- boruta ----
     message("boruta")
     rfBorutaModel <<- train(y = y, x = X,
@@ -396,7 +396,7 @@ switch(method,
                             trControl = controlObject)
     my_models[["rfBorutaModel"]] = rfBorutaModel  
   },
-  rknnBel = {
+  rknnBelModel = {
     ## -- rknnBel ----
     message("rknnBel")
     rknnBelModel <<- train(y = y, x = X,
@@ -407,7 +407,7 @@ switch(method,
                            trControl = controlObject)
     my_models[["rknnBelModel"]] = rknnBelModel
   },
-  M5 = {
+  mtModel = {
     ## -- M5 ----
     message("M5")
     
@@ -418,7 +418,7 @@ switch(method,
                      trControl = controlObject)
     my_models[["mtModel"]] = mtModel
   },
-  cubist = {
+  cbModel = {
     ## -- cubist ----
     message("cubist")
     
